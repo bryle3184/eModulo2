@@ -3,14 +3,14 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import path from 'node:path';
 import fs from 'node:fs';
-import { PROJECT_ROOT, migrate, seed, db } from './db.js';
-import { HttpError } from './lib.js';
-import { authRouter } from './routes/auth.js';
-import { learnRouter } from './routes/learn.js';
-import { assessmentRouter } from './routes/assessments.js';
-import { gamificationRouter } from './routes/gamification.js';
-import { socialRouter } from './routes/social.js';
-import { accountRouter } from './routes/account.js';
+import { PROJECT_ROOT, db } from '../server/db.js';
+import { HttpError } from '../server/lib.js';
+import { authRouter } from '../server/routes/auth.js';
+import { learnRouter } from '../server/routes/learn.js';
+import { assessmentRouter } from '../server/routes/assessments.js';
+import { gamificationRouter } from '../server/routes/gamification.js';
+import { socialRouter } from '../server/routes/social.js';
+import { accountRouter } from '../server/routes/account.js';
 
 // Initialize Express app
 const app = express();
@@ -47,6 +47,7 @@ if (fs.existsSync(clientDir)) {
 // Error handler
 app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   if (err instanceof HttpError) {
+    console.log(`[emodulo] HTTP ${err.status}: ${err.message}`);
     res.status(err.status).json({ error: err.message });
     return;
   }
@@ -58,13 +59,9 @@ app.use((err: unknown, _req: express.Request, res: express.Response, _next: expr
     });
     return;
   }
-  console.error('[emodulo] unhandled error', err);
+  console.error('[emodulo] unhandled error:', err);
   res.status(500).json({ error: 'Something went wrong on our side. Please try again.' });
 });
 
 // Export the Express app as the Vercel handler
 export default app;
-
-// Run migrations in background (non-blocking)
-migrate().catch((err) => console.error('[emodulo] Migration error:', err));
-seed().catch((err) => console.error('[emodulo] Seed error:', err));
