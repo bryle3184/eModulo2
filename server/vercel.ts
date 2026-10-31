@@ -65,21 +65,6 @@ app.use((err: unknown, _req: express.Request, res: express.Response, _next: expr
 // Export the Express app as the Vercel handler
 export default app;
 
-// Run migrations and seeding asynchronously
-(async () => {
-  try {
-    // Check if database is available
-    const testQuery = await db.prepare('SELECT 1').get();
-    if (testQuery) {
-      console.log('[emodulo] Database connection successful');
-      await migrate();
-      await seed();
-      console.log('[emodulo] Database migrations and seeding completed');
-    } else {
-      console.warn('[emodulo] Database connection test failed or returned null');
-    }
-  } catch (err) {
-    console.error('[emodulo] Database initialization failed:', err);
-    // Continue without migrations if database is not available
-  }
-})();
+// Run migrations in background (non-blocking)
+migrate().catch((err) => console.error('[emodulo] Migration error:', err));
+seed().catch((err) => console.error('[emodulo] Seed error:', err));
